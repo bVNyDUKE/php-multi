@@ -1,0 +1,28 @@
+{
+    "name": "kpanda/php-csv-analyzer",
+    "type": "project",
+    "scripts": {
+        "lint": "vendor/bin/phpstan analyse -c phpstan.neon",
+        "test": "vendor/bin/phpunit tests",
+        "docker:build": "docker build . -t php-parallel",
+        "docker:start": "docker run --rm --name php-parallel-container -it php-parallel"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kpanda\\PhpCsvAnalyzer\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Darko Ivkov",
+            "email": "bVNyDUKE@protonmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^11",
+        "phpstan/phpstan": "^1.10"
+    },
+    "require": {
+        "amphp/parallel": "^2.2"
+    }
+}
