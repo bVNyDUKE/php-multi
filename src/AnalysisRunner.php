@@ -14,8 +14,10 @@ final class AnalysisRunner
     {
     }
 
-    public function execute(): void
+    /** @return array<array-key, mixed> */
+    public function execute()
     {
+        var_dump(opcache_get_status());
         $execs = [];
         foreach($this->filePaths as $path) {
             $execs[$path] = Worker\submit(new FileAnalyzerTask($path));
@@ -23,10 +25,6 @@ final class AnalysisRunner
 
         $responses = Future\await(array_map(fn (Worker\Execution $e) => $e->getFuture(), $execs));
 
-        foreach($responses as $file => $res) {
-            echo "Read file: {$file}". PHP_EOL;
-            var_dump($res);
-        }
-        echo "FINISHED" . PHP_EOL;
+        return $responses;
     }
 }

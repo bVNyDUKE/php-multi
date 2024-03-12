@@ -1,0 +1,33 @@
+#!/usr/bin/php
+<?php
+
+if (php_sapi_name() !== 'cli') {
+    exit;
+}
+
+require  __DIR__ . '/../vendor/autoload.php';
+
+$app = new \Kpanda\PhpCsvAnalyzer\AnalysisRunner([
+    __DIR__ . "/../tests/fixtures/deletions.csv-00019-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00000-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00016-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00001-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00014-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00007-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00013-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00017-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00008-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00011-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00002-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00015-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00009-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00006-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00012-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00003-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00004-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00010-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00018-of-00020",
+    __DIR__ . "/../tests/fixtures/deletions.csv-00005-of-00020",
+]);
+
+$app->execute();

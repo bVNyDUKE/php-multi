@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kpanda\PhpCsvAnalyzer;
 
 use Amp\Cancellation;
+use Amp\CancelledException;
 use Amp\Parallel\Worker\Task;
 use Amp\Sync\Channel;
 
@@ -17,28 +18,40 @@ final class FileAnalyzerTask implements Task
     {
     }
 
-    public function run(Channel $channel, Cancellation $cancellation): mixed
+    /** @return \Generator<array<int, int|string>> */
+    private function recordIterator()
     {
-
-        $header = [];
         $handle = fopen($this->filePath, "r");
-
         if(!$handle) {
             throw new \Exception("File not found");
         }
+        try {
+            while(($data = fgetcsv($handle)) !== false) {
+                yield $data;
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    public function run(Channel $channel, Cancellation $cancellation): mixed
+    {
+        $header = null;
 
         /** @var array{records: int, columns: array<mixed, array{appearances: int, values: array<mixed, int>}>} */
         $result = ["records" => 0, "columns" => []];
 
-        while(($data = fgetcsv($handle)) !== false) {
-            if(count($header) === 0) {
+        foreach($this->recordIterator() as $data) {
+            if($cancellation->isRequested()) {
+                throw new CancelledException();
+            }
+            if(!$header) {
                 $header = $data;
                 continue;
             }
             $result["records"]++;
-
             foreach($header as $colNum => $colName) {
-                $cell = $data[$colNum];
+                $cell = $data[$colNum] ?? null;
                 if(!$cell) {
                     continue;
                 }
@@ -49,16 +62,17 @@ final class FileAnalyzerTask implements Task
 
                 $result["columns"][$colName]["appearances"]++;
 
-                if(!array_key_exists($cell, $result["columns"][$colName]["values"])) {
-                    $result["columns"][$colName]["values"][$cell] = 1;
-                    continue;
-                }
+                //too much memory usage
+                /* if(!array_key_exists($cell, $result["columns"][$colName]["values"])) { */
+                /*     $result["columns"][$colName]["values"][$cell] = 1; */
+                /*     continue; */
+                /* } */
 
-                $result["columns"][$colName]["values"][$cell]++;
+                /* $result["columns"][$colName]["values"][$cell]++; */
             }
         }
-
-        fclose($handle);
+        echo "PARSED FILE {$this->filePath}".PHP_EOL;
+        var_dump($result);
         return $result;
     }
 }
