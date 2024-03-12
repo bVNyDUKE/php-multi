@@ -1,1 +1,0 @@
-{"version":1,"defects":{"Kpanda\\PhpCsvAnalyzer\\FileAnalyzerTest::testRunAnalysis":5,"Kpanda\\PhpCsvAnalyzer\\AnalysisRunnerTest::testRunAnalysis":5},"times":{"Kpanda\\PhpCsvAnalyzer\\FileAnalyzerTest::testRunAnalysis":0.001,"Kpanda\\PhpCsvAnalyzer\\AnalysisRunnerTest::testRunAnalysis":0.023}}
