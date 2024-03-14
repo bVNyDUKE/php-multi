@@ -37,6 +37,7 @@ final class FileAnalyzerTask implements Task
     public function run(Channel $channel, Cancellation $cancellation): mixed
     {
         $header = null;
+        $db = Database::connect();
 
         /** @var array{records: int, columns: array<mixed, array{appearances: int, values: array<mixed, int>}>} */
         $result = ["records" => 0, "columns" => []];
@@ -63,12 +64,18 @@ final class FileAnalyzerTask implements Task
                 $result["columns"][$colName]["appearances"]++;
 
                 //too much memory usage
-                /* if(!array_key_exists($cell, $result["columns"][$colName]["values"])) { */
-                /*     $result["columns"][$colName]["values"][$cell] = 1; */
-                /*     continue; */
-                /* } */
+                if(!array_key_exists($cell, $result["columns"][$colName]["values"])) {
+                    $result["columns"][$colName]["values"][$cell] = 1;
+                    continue;
+                }
+                $result["columns"][$colName]["values"][$cell]++;
 
-                /* $result["columns"][$colName]["values"][$cell]++; */
+                $valCount = count($result["columns"][$colName]["values"]);
+                if($valCount > 1_000) {
+                    $db->updateColumn($colName, $result["columns"][$colName]["values"]);
+                    $result["columns"][$colName]["values"] = [];
+                }
+
             }
         }
         echo "PARSED FILE {$this->filePath}".PHP_EOL;

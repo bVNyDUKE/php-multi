@@ -17,13 +17,16 @@ final class AnalysisRunner
     /** @return array<array-key, mixed> */
     public function execute()
     {
-        var_dump(opcache_get_status());
         $execs = [];
+        $db = Database::createAndConnect();
         foreach($this->filePaths as $path) {
             $execs[$path] = Worker\submit(new FileAnalyzerTask($path));
         }
 
         $responses = Future\await(array_map(fn (Worker\Execution $e) => $e->getFuture(), $execs));
+
+        $db->printSummary();
+        $db->cleanUp();
 
         return $responses;
     }

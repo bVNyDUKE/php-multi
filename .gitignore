@@ -2,3 +2,4 @@
 /.phpunit.cache/
 /tests/fixtures/
 .php-cs-fixer.cache
+tmp.db*
