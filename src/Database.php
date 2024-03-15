@@ -9,32 +9,20 @@ use SQLite3;
 
 final class Database
 {
-    private string $path = __DIR__."/tmp.db";
     private SQLite3 $db;
 
-    private function __construct()
+    public function __construct()
     {
-        $this->db = new SQLite3($this->path);
+        $this->db = new SQLite3("");
         $this->db->exec('PRAGMA journal_mode = wal');
         $this->db->exec('PRAGMA synchronous = off');
         $this->db->exec('PRAGMA busy_timeout = 4000');
-    }
-
-    private function createTable(): void
-    {
         $this->db->exec('CREATE TABLE column_values (column STRING, value STRING, count INTEGER)');
     }
 
-    public static function createAndConnect(): Database
+    public function __destruct()
     {
-        $db = new static();
-        $db->createTable();
-        return $db;
-    }
-
-    public static function connect(): Database
-    {
-        return new static();
+        $this->db->close();
     }
 
     /**
@@ -75,10 +63,6 @@ final class Database
             );
         }
         var_dump($res);
-    }
-
-    public function cleanUp(): void
-    {
-        unlink($this->path);
+        $this->db->close();
     }
 }

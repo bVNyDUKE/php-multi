@@ -37,7 +37,9 @@ final class FileAnalyzerTask implements Task
     public function run(Channel $channel, Cancellation $cancellation): mixed
     {
         $header = null;
-        $db = Database::connect();
+        $splitPath = explode("/", $this->filePath);
+        $fileName = array_pop($splitPath);
+        $db = new Database($fileName);
 
         /** @var array{records: int, columns: array<mixed, array{appearances: int, values: array<mixed, int>}>} */
         $result = ["records" => 0, "columns" => []];
