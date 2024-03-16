@@ -23,6 +23,6 @@
         "phpstan/phpstan": "^1.10"
     },
     "require": {
-        "amphp/parallel": "^2.2"
+        "spatie/fork": "^1.2"
     }
 }

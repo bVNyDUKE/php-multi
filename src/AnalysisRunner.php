@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Kpanda\PhpCsvAnalyzer;
 
-use Amp\Future;
-use Amp\Parallel\Worker;
+use Spatie\Fork\Fork;
 
 final class AnalysisRunner
 {
@@ -17,12 +16,8 @@ final class AnalysisRunner
     /** @return array<array-key, mixed> */
     public function execute()
     {
-        $execs = [];
-        foreach($this->filePaths as $path) {
-            $execs[$path] = Worker\submit(new FileAnalyzerTask($path));
-        }
-
-        $responses = Future\await(array_map(fn (Worker\Execution $e) => $e->getFuture(), $execs));
+        $tasks = array_map(fn ($path) => fn () => (new FileAnalyzerTask($path))->run(), $this->filePaths);
+        $responses = Fork::new()->run(...$tasks);
 
         return $responses;
     }

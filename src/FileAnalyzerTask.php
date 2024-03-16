@@ -4,15 +4,7 @@ declare(strict_types=1);
 
 namespace Kpanda\PhpCsvAnalyzer;
 
-use Amp\Cancellation;
-use Amp\CancelledException;
-use Amp\Parallel\Worker\Task;
-use Amp\Sync\Channel;
-
-/**
- * @implements Task<mixed, mixed, mixed>
- */
-final class FileAnalyzerTask implements Task
+final class FileAnalyzerTask
 {
     public function __construct(private readonly string $filePath)
     {
@@ -34,20 +26,15 @@ final class FileAnalyzerTask implements Task
         }
     }
 
-    public function run(Channel $channel, Cancellation $cancellation): mixed
+    public function run(): mixed
     {
         $header = null;
-        $splitPath = explode("/", $this->filePath);
-        $fileName = array_pop($splitPath);
-        $db = new Database($fileName);
+        $db = new Database();
 
         /** @var array{records: int, columns: array<mixed, array{appearances: int, values: array<mixed, int>}>} */
         $result = ["records" => 0, "columns" => []];
 
         foreach($this->recordIterator() as $data) {
-            if($cancellation->isRequested()) {
-                throw new CancelledException();
-            }
             if(!$header) {
                 $header = $data;
                 continue;
