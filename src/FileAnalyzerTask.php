@@ -6,35 +6,36 @@ namespace Kpanda\PhpCsvAnalyzer;
 
 final class FileAnalyzerTask
 {
+    private readonly string $dbPath;
+
     public function __construct(private readonly string $filePath)
     {
+        $splitPath = explode("/", $this->filePath);
+        $fileName = array_pop($splitPath);
+        $this->dbPath = "{$fileName}-temp.db";
     }
 
-    /** @return \Generator<array<int, int|string>> */
-    private function recordIterator()
+    //should probably return an interface or something
+    private function makeDb(): Database
     {
-        $handle = fopen($this->filePath, "r");
-        if(!$handle) {
-            throw new \Exception("File not found");
-        }
-        try {
-            while(($data = fgetcsv($handle)) !== false) {
-                yield $data;
-            }
-        } finally {
-            fclose($handle);
-        }
+        return (new Database($this->dbPath))->createTables();
     }
 
-    public function run(): mixed
+    /** @return array{result: mixed, summaryDb: string} */
+    public function run()
     {
         $header = null;
-        $db = new Database();
+        $db = $this->makeDb();
 
         /** @var array{records: int, columns: array<mixed, array{appearances: int, values: array<mixed, int>}>} */
         $result = ["records" => 0, "columns" => []];
 
-        foreach($this->recordIterator() as $data) {
+        $handle = fopen($this->filePath, "r");
+        if(!$handle) {
+            throw new \Exception("File not found");
+        }
+
+        while(($data = fgetcsv($handle)) !== false) {
             if(!$header) {
                 $header = $data;
                 continue;
@@ -60,15 +61,19 @@ final class FileAnalyzerTask
                 $result["columns"][$colName]["values"][$cell]++;
 
                 $valCount = count($result["columns"][$colName]["values"]);
-                if($valCount > 1_000) {
+                if($valCount > 500) {
                     $db->updateColumn($colName, $result["columns"][$colName]["values"]);
                     $result["columns"][$colName]["values"] = [];
                 }
 
             }
+
+        }
+        foreach($result["columns"] as $colName => $data) {
+            $db->updateColumn($colName, $data["values"]);
+            $data["values"] = [];
         }
         echo "PARSED FILE {$this->filePath}".PHP_EOL;
-        var_dump($result);
-        return $result;
+        return ["result" => $result, "summaryDb" => $this->dbPath];
     }
 }
