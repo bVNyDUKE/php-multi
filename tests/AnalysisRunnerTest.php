@@ -53,12 +53,22 @@ final class AnalysisRunnerTest extends TestCase
         }
     }
 
-    public function testRunAnalysis(): void
+    public function testSanity(): void
     {
         $fa = new AnalysisRunner($this->testFiles);
         $res = $fa->execute();
 
         assertEquals(2, count($res));
+    }
+
+    public function testOneBigFile(): void
+    {
+        $fa = new AnalysisRunner([
+                "./tests/fixtures/deletions.csv-00019-of-00020",
+        ]);
+        $res = $fa->execute();
+
+        assertEquals(1, count($res));
     }
 
     public function testBigFiles(): void
