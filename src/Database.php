@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace Kpanda\PhpCsvAnalyzer;
 
 use Exception;
-use SQLite3;
-use SQLite3Result;
+use PDO;
 
 final class Database
 {
-    private SQLite3 $db;
+    private PDO $db;
 
-    public function __construct(private string $dbName)
+    public function __construct(public readonly string $dbName)
     {
-        $this->db = new SQLite3($this->dbName);
+        $this->db = new PDO("sqlite:{$this->dbName}");
     }
 
     public function createTables(): self
@@ -26,9 +25,11 @@ final class Database
         return $this;
     }
 
-    public function __destruct()
+    public function cleanUpTable(): void
     {
-        $this->db->close();
+        unlink($this->dbName);
+        unlink("{$this->dbName}-shm");
+        unlink("{$this->dbName}-wal");
     }
 
     /**
@@ -39,37 +40,31 @@ final class Database
     {
         $stmt = $this->db->prepare('INSERT INTO column_values (column, value, count) VALUES (:col, :val, :count);');
         if(!$stmt) {
-            throw new Exception(
-                "Prepare statement failed {$this->db->lastErrorMsg()}",
-                $this->db->lastErrorCode()
-            );
+            [$msg, $code] = $this->db->errorInfo();
+            throw new Exception("Prepare statement failed {$msg}", $code);
         }
         foreach($columnValues as $val => $count) {
             echo "UPDATING COLUMN TABLES {$column}, {$val}, {$count}" . PHP_EOL;
-            $stmt->bindValue(":col", $column, SQLITE3_TEXT);
-            $stmt->bindValue(":val", $val, SQLITE3_TEXT);
-            $stmt->bindValue(":count", $count, SQLITE3_INTEGER);
-            $res = $stmt->execute();
-            if(!$res) {
-                throw new Exception(
-                    "Insert statement failed {$this->db->lastErrorMsg()}",
-                    $this->db->lastErrorCode()
-                );
+            $ok = $stmt->execute([
+                "col" => $column,
+                "val" => $val,
+                "count" => $count,
+            ]);
+            if(!$ok) {
+                [$msg, $code] = $this->db->errorInfo();
+                throw new Exception("Insert statement failed {$msg}", $code);
             }
-            $stmt->clear();
-            $stmt->reset();
         }
     }
 
-    public function getSummary(): SQLite3Result
+    /** @return array<string, int|string> */
+    public function getSummary(): array
     {
         $res = $this->db->query('SELECT * FROM column_values GROUP BY column, value, count;');
         if(!$res) {
-            throw new Exception(
-                "Error fetching summary {$this->db->lastErrorMsg()}",
-                $this->db->lastErrorCode()
-            );
+            [$msg, $code] = $this->db->errorInfo();
+            throw new Exception("Error fetching summary {$msg}", $code);
         }
-        return $res;
+        return $res->fetchAll(PDO::FETCH_ASSOC);
     }
 }

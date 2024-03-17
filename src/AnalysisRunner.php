@@ -22,7 +22,8 @@ final class AnalysisRunner
         foreach($responses as $r) {
             $db = new Database($r["summaryDb"]);
             $summary = $db->getSummary();
-            var_dump($summary->fetchArray(SQLITE3_ASSOC));
+            var_dump($summary);
+            $db->cleanUpTable();
         }
 
         return $responses;
